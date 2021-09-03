@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Game</title>
+	<link rel="stylesheet" href="style.css">
+	<script src="phaser.min.js"></script>
+</head>
+<body>
+<script>
+var config = {
+    type: Phaser.AUTO,
+    width: 1000,
+    height: 600,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 0 },
+            debug: false
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
+};
+
+var player1;
+var player2;
+var ball;
+var cursors;
+var score = 0;
+var gameOver = false;
+var scoreLeft, scoreRight, winText;
+var graphics;
+var left = 0, right = 0;
+
+var game = new Phaser.Game(config);
+
+function preload ()
+{
+    this.load.image('player', 'img/player.png');
+    this.load.image('player2', 'img/player2.png');
+    this.load.image('ball', 'img/ball.png');
+}
+
+function create ()
+{
+	graphics = this.add.graphics();
+
+    graphics.lineStyle(16, 0xffffff, 0.7);
+
+    graphics.lineBetween(500, 0, 500, 600);
+
+    this.physics.world.setBoundsCollision(false, false, true, true);
+
+    player = this.physics.add.image(1000, 300, 'player').setImmovable();
+    player2 = this.physics.add.image(0, 300, 'player2').setImmovable().setVelocityY(-330);
+    ball = this.physics.add.image(500, 300, 'ball').setVelocity(-300, Phaser.Math.Between(-500, 500)).setCollideWorldBounds(true).setBounce(1.0, 1.0);
+
+    //  Input Events
+    cursors = this.input.keyboard.createCursorKeys();
+
+   //  The score
+    scoreLeft = this.add.text(600, 8, '0', { fontSize: '64px', fill: '#fff' });
+    scoreRight = this.add.text(355, 8, '0', { fontSize: '64px', fill: '#fff' });
+
+    //  Collide the player and the stars with the platforms
+    this.physics.add.collider(ball, player, hitPaddle, null, this);
+    this.physics.add.collider(ball, player2, hitPaddle, null, this);
+}
+
+function update ()
+{
+	if(gameOver)
+	{
+		this.physics.pause();
+		setTimeout('window.location.reload()', 1000);
+		return;
+	}
+	player.setVelocity(0);
+	// this.physics.world.collide(ball, [player, player2]);
+    if (cursors.up.isDown && !(player.y <= 128))
+    {
+        player.setVelocityY(-330);
+    }
+    else if (cursors.down.isDown && !(player.y >= config.height - 128))
+    {
+        player.setVelocityY(330);
+    }
+
+    if(player2.y >= config.height - 128)
+    {
+    	player2.setVelocityY(-330);
+    }
+    else if(player2.y <= 128)
+    {
+    	player2.setVelocityY(330);
+    }
+
+    if (ball.x > config.width - 32)
+    {
+    	left++;
+    	scoreLeft.setText(left);
+    	ball.setPosition(500, 300).setVelocity(300, Phaser.Math.Between(-500, 500));
+    } 
+    else if (ball.x < 32)
+    {
+    	right++;
+    	scoreRight.setText(right);
+    	ball.setPosition(500, 300).setVelocity(-300, Phaser.Math.Between(-500, 500));
+    }
+
+    if(right == 10)
+    {
+    	gameOver = true;
+    	winText = this.add.text(350, 300, 'You win!', { fontSize: '64px', fill: '#fff' });
+    }
+    else if(left == 10)
+    {
+    	gameOver = true;
+    	winText = this.add.text(350, 300, 'You lose!', { fontSize: '64px', fill: '#fff' });
+    }
+}
+
+function hitPaddle(ball, paddle)
+{
+    var diff = 0;
+
+    if (ball.x < paddle.x)
+    {
+    //  Ball is on the left-hand side of the paddle
+		    diff = paddle.x - ball.x;
+        ball.setVelocityX(-10 * diff);
+    }
+    else if (ball.x > paddle.x)
+    {
+    //  Ball is on the right-hand side of the paddle
+    		diff = ball.x -paddle.x;
+        ball.setVelocityX(10 * diff);
+    }
+    else
+    {
+    	//  Ball is perfectly in the middle
+        //  Add a little random X to stop it bouncing straight up!
+        ball.setVelocityX(2 + Math.random() * 8);
+    }
+}
+
+</script>
+</body>
+</html>
